@@ -96,7 +96,7 @@
         .touch-btn:active:not(:disabled) {
             transform: translateY(2px);
             border-bottom-width: 2px;
-            margin-bottom: 2px;
+            margin-bottom: 2px; /* Prevent layout shift */
             background: #e2e8f0;
         }
 
@@ -105,7 +105,7 @@
             cursor: not-allowed;
             border-bottom-width: 2px;
             transform: translateY(2px);
-            margin-bottom: 2px;
+            margin-bottom: 2px; /* Prevent layout shift */
         }
 
         .disabled-look {
@@ -183,7 +183,10 @@
                 <!-- Metadata Editor -->
                 <div class="flex flex-col gap-1 mb-2">
                     <input type="text" id="edit-title" class="w-full px-2 py-1 rounded border-2 border-gray-400 bg-white/50 text-gray-800 text-sm font-sans focus:bg-white focus:outline-none focus:border-blue-400 transition-colors" placeholder="Track Title" disabled>
-                    <input type="text" id="edit-artist" class="w-full px-2 py-1 rounded border-2 border-gray-400 bg-white/50 text-gray-800 text-sm font-sans focus:bg-white focus:outline-none focus:border-blue-400 transition-colors" placeholder="Artist Name" disabled>
+                    <div class="flex gap-1">
+                        <input type="text" id="edit-artist" class="w-1/2 px-2 py-1 rounded border-2 border-gray-400 bg-white/50 text-gray-800 text-sm font-sans focus:bg-white focus:outline-none focus:border-blue-400 transition-colors" placeholder="Artist Name" disabled>
+                        <input type="text" id="edit-album" class="w-1/2 px-2 py-1 rounded border-2 border-gray-400 bg-white/50 text-gray-800 text-sm font-sans focus:bg-white focus:outline-none focus:border-blue-400 transition-colors" placeholder="Album Name" disabled>
+                    </div>
                 </div>
 
                 <button id="btn-convert" class="touch-btn w-full rounded-lg py-2 text-base font-bold bg-green-100 flex items-center justify-center text-green-800 border-green-400 mt-auto mb-2" disabled>
@@ -213,6 +216,7 @@
         const logWindow = document.getElementById('log-window');
         const editTitle = document.getElementById('edit-title');
         const editArtist = document.getElementById('edit-artist');
+        const editAlbum = document.getElementById('edit-album');
         
         let currentFile = null;
         let audioElement = new Audio();
@@ -259,6 +263,7 @@
             btnConvert.disabled = false;
             editTitle.disabled = false;
             editArtist.disabled = false;
+            editAlbum.disabled = false;
             artInput.disabled = false;
             labelArtUpload.classList.remove('disabled-look');
 
@@ -270,12 +275,14 @@
                     const tags = tag.tags;
                     const title = tags.title || fallbackTitle;
                     const artist = tags.artist || "Unknown Artist";
+                    const album = tags.album || "Unknown Album";
 
                     trackTitle.innerText = title;
                     trackArtist.innerText = artist;
                     
                     editTitle.value = title;
                     editArtist.value = artist;
+                    editAlbum.value = album;
 
                     if (tags.picture) {
                         const { data, format } = tags.picture;
@@ -299,6 +306,7 @@
                     trackArtist.innerText = "Unknown Artist";
                     editTitle.value = fallbackTitle;
                     editArtist.value = "Unknown Artist";
+                    editAlbum.value = "Unknown Album";
                     albumArt.style.backgroundImage = 'none';
                     albumArt.innerText = "No Art";
                 }
@@ -350,6 +358,7 @@
                 artInput.disabled = true;
                 editTitle.disabled = true;
                 editArtist.disabled = true;
+                editAlbum.disabled = true;
                 labelArtUpload.classList.add('disabled-look');
                 audioElement.pause();
                 topScreen.classList.remove('playing');
@@ -405,7 +414,7 @@
                 }
 
                 const inputName = 'input_audio';
-                const outputName = 'output_3ds_ready.m4a';
+                const outputName = 'output_3ds_ready.mp3';
                 let artName = null;
 
                 log("Writing audio to memory...");
@@ -421,24 +430,27 @@
                     commandArgs.push('-i', artName); // Add image as second input
                 }
 
-                log("Encoding AAC (128k, 44.1kHz)...");
+                log("Encoding MP3 (128k, 44.1kHz)...");
                 log("Please wait, this takes CPU power.");
                 
                 const finalTitle = editTitle.value || 'Unknown Title';
                 const finalArtist = editArtist.value || 'Unknown Artist';
+                const finalAlbum = editAlbum.value || 'Unknown Album';
 
                 // Setup the mapping and metadata
                 if (currentArtBlob) {
-                    // Map input 0 (audio) and input 1 (image), copy image stream, attach as picture
-                    commandArgs.push('-map', '0:a', '-map', '1:v', '-c:v', 'copy', '-disposition:v', 'attached_pic');
+                    // Map inputs, force MJPEG, and scale down to 320x320 so 3DS memory doesn't crash on high-res PNGs
+                    commandArgs.push('-map', '0:a', '-map', '1:v', '-c:v', 'mjpeg', '-s', '320x320', '-disposition:v', 'attached_pic');
                 }
 
                 commandArgs.push(
-                    '-c:a', 'aac', 
+                    '-c:a', 'libmp3lame', 
                     '-b:a', '128k', 
                     '-ar', '44100', 
+                    '-id3v2_version', '3', // Critical: 3DS strictly requires legacy ID3v2.3 tags
                     '-metadata', `title=${finalTitle}`,
                     '-metadata', `artist=${finalArtist}`,
+                    '-metadata', `album=${finalAlbum}`,
                     outputName
                 );
 
@@ -449,13 +461,13 @@
                 
                 // Read the result
                 const data = await ffmpeg.readFile(outputName);
-                const blob = new Blob([data.buffer], { type: 'audio/mp4' });
+                const blob = new Blob([data.buffer], { type: 'audio/mpeg' });
                 const url = URL.createObjectURL(blob);
                 
                 // Trigger download
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = (finalTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'track') + '_3ds.m4a';
+                a.download = (finalTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'track') + '_3ds.mp3';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -480,6 +492,7 @@
                 artInput.disabled = false;
                 editTitle.disabled = false;
                 editArtist.disabled = false;
+                editAlbum.disabled = false;
                 labelArtUpload.classList.remove('disabled-look');
                 btnConvert.innerText = "⟳ Convert Another";
             }
