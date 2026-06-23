@@ -1,235 +1,492 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3DS Button Demo</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      padding: 20px;
-    }
-    h1 { margin-bottom: 10px; font-size: 28px; }
-    .subtitle { color: #888; margin-bottom: 30px; font-size: 14px; }
-    .controller {
-      background: linear-gradient(180deg, #2d2d2d 0%, #1a1a1a 100%);
-      border-radius: 30px;
-      padding: 40px;
-      display: flex;
-      align-items: center;
-      gap: 80px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.1);
-    }
-    .dpad-section { position: relative; width: 120px; height: 120px; }
-    .dpad {
-      position: absolute;
-      background: #111;
-      border-radius: 8px;
-    }
-    .dpad-h { width: 120px; height: 40px; top: 40px; left: 0; }
-    .dpad-v { width: 40px; height: 120px; top: 0; left: 40px; }
-    .dpad-btn {
-      position: absolute;
-      width: 40px;
-      height: 40px;
-      background: #222;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      color: #666;
-      cursor: pointer;
-      transition: all 0.1s;
-      border: none;
-    }
-    .dpad-btn:active, .dpad-btn.active { background: #e74c3c; color: #fff; box-shadow: 0 0 20px #e74c3c; }
-    .dpad-up { top: 0; left: 40px; border-radius: 8px 8px 0 0; }
-    .dpad-down { bottom: 0; left: 40px; border-radius: 0 0 8px 8px; }
-    .dpad-left { left: 0; top: 40px; border-radius: 8px 0 0 8px; }
-    .dpad-right { right: 0; top: 40px; border-radius: 0 8px 8px 0; }
-    .dpad-center { position: absolute; width: 40px; height: 40px; top: 40px; left: 40px; background: #1a1a1a; border-radius: 4px; }
-    .center-section { display: flex; flex-direction: column; align-items: center; gap: 20px; }
-    .select-start { display: flex; gap: 20px; }
-    .ss-btn {
-      width: 40px;
-      height: 12px;
-      background: #333;
-      border-radius: 6px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 8px;
-      color: #666;
-      transition: all 0.1s;
-      border: none;
-    }
-    .ss-btn:active, .ss-btn.active { background: #e74c3c; color: #fff; box-shadow: 0 0 15px #e74c3c; }
-    .logo {
-      width: 60px;
-      height: 30px;
-      background: linear-gradient(180deg, #d1242f 0%, #a01d27 100%);
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      font-weight: bold;
-      color: #fff;
-    }
-    .abxy-section { position: relative; width: 120px; height: 120px; }
-    .abxy-btn {
-      position: absolute;
-      width: 36px;
-      height: 36px;
-      background: #8e44ad;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: bold;
-      color: #fff;
-      cursor: pointer;
-      transition: all 0.1s;
-      border: none;
-      box-shadow: 0 4px 0 #6c3483;
-    }
-    .abxy-btn:active, .abxy-btn.active { background: #e74c3c; box-shadow: 0 0 20px #e74c3c; transform: translateY(2px); }
-    .btn-a { right: 0; top: 42px; }
-    .btn-b { bottom: 0; left: 42px; }
-    .btn-x { top: 0; left: 42px; }
-    .btn-y { left: 0; top: 42px; }
-    .triggers {
-      display: flex;
-      gap: 10px;
-      margin-top: 20px;
-    }
-    .trigger {
-      width: 50px;
-      height: 20px;
-      background: #333;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 9px;
-      color: #666;
-      cursor: pointer;
-      transition: all 0.1s;
-      border: none;
-    }
-    .trigger:active, .trigger.active { background: #e74c3c; color: #fff; box-shadow: 0 0 15px #e74c3c; }
-    .status-box {
-      margin-top: 30px;
-      background: rgba(0,0,0,0.3);
-      border-radius: 15px;
-      padding: 25px 40px;
-      text-align: center;
-    }
-    .status-label { font-size: 14px; color: #888; margin-bottom: 10px; }
-    .status-value { font-size: 32px; font-weight: bold; color: #e74c3c; }
-    .status-hex { font-size: 14px; color: #666; margin-top: 5px; }
-    .reference {
-      margin-top: 30px;
-      background: rgba(0,0,0,0.2);
-      border-radius: 10px;
-      padding: 20px;
-      font-size: 11px;
-      color: #666;
-      max-width: 400px;
-    }
-    .reference h3 { color: #888; margin-bottom: 10px; font-size: 12px; }
-    .ref-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 20px; }
-    .ref-item { display: flex; justify-content: space-between; }
-    .ref-name { color: #aaa; }
-    .ref-code { font-family: monospace; color: #e74c3c; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3DS Audio Prep Station</title>
+    
+    <!-- Tailwind CSS for layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- jsmediatags for ID3 extraction -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+    
+    <!-- FFmpeg.wasm v0.12 (Using jsdelivr for stable, CORS-friendly fetching) -->
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+        body {
+            background-color: #1a202c;
+            background-image: radial-gradient(#2d3748 1px, transparent 1px);
+            background-size: 20px 20px;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        .ds-shell {
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+            box-shadow: 
+                inset 0 0 20px rgba(0,0,0,0.3),
+                0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        .ds-screen-top {
+            background: #000;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.1);
+        }
+
+        /* Top Screen animated background */
+        .ds-screen-top::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(59, 130, 246, 0.2), transparent 40%),
+                        conic-gradient(from 180deg, transparent, rgba(236, 72, 153, 0.2), transparent 40%);
+            animation: rotateBg 10s linear infinite;
+            animation-play-state: paused;
+            z-index: 1;
+        }
+
+        .playing .ds-screen-top::before {
+            animation-play-state: running;
+        }
+
+        .screen-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .album-art {
+            background-color: #2d3748;
+            background-size: cover;
+            background-position: center;
+            border: 3px solid #fff;
+            box-shadow: 0 0 15px rgba(0,0,0,0.8);
+            animation: spin 5s linear infinite;
+            animation-play-state: paused;
+        }
+
+        .playing .album-art {
+            animation-play-state: running;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes rotateBg { 100% { transform: rotate(360deg); } }
+
+        .ds-screen-bottom {
+            background-color: #cbd5e0;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.2);
+            font-family: 'VT323', monospace;
+        }
+
+        /* Stylized Buttons */
+        .touch-btn {
+            background: linear-gradient(to bottom, #ffffff, #e2e8f0);
+            border: 2px solid #a0aec0;
+            border-bottom-width: 4px;
+            color: #2d3748;
+            text-transform: uppercase;
+            transition: all 0.1s;
+        }
+        
+        .touch-btn:active:not(:disabled) {
+            transform: translateY(2px);
+            border-bottom-width: 2px;
+            margin-bottom: 2px;
+            background: #e2e8f0;
+        }
+
+        .touch-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            border-bottom-width: 2px;
+            transform: translateY(2px);
+            margin-bottom: 2px;
+        }
+
+        .disabled-look {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .ds-hinge {
+            background: #9b2c2c;
+            border-top: 2px solid #fc8181;
+            border-bottom: 2px solid #742a2a;
+        }
+
+        /* Custom File Input */
+        input[type="file"] {
+            display: none;
+        }
+        .file-upload-label {
+            display: inline-block;
+            cursor: pointer;
+        }
+    </style>
 </head>
-<body>
-  <h1>3DS Button Demo</h1>
-  <p class="subtitle">Click the buttons to see their hex codes</p>
+<body class="min-h-screen flex items-center justify-center p-4">
 
-  <div class="controller">
-    <div class="dpad-section">
-      <div class="dpad dpad-h"></div>
-      <div class="dpad dpad-v"></div>
-      <div class="dpad-center"></div>
-      <button class="dpad-btn dpad-up" data-code="0x00000001" data-name="D-Pad Up">UP</button>
-      <button class="dpad-btn dpad-down" data-code="0x00000008" data-name="D-Pad Down">DN</button>
-      <button class="dpad-btn dpad-left" data-code="0x00000002" data-name="D-Pad Left">LF</button>
-      <button class="dpad-btn dpad-right" data-code="0x00000004" data-name="D-Pad Right">RT</button>
+    <!-- The 3DS Console -->
+    <div class="ds-shell w-full max-w-md rounded-[2.5rem] p-6 flex flex-col gap-4">
+        
+        <!-- TOP SCREEN -->
+        <div id="top-screen-container" class="w-full aspect-[5/3] bg-black border-[16px] border-black rounded-xl ds-screen-top flex flex-col items-center justify-center text-white p-4">
+            <div class="screen-content flex flex-col items-center text-center w-full">
+                <!-- Album Art Circle -->
+                <div id="album-art" class="w-24 h-24 rounded-full album-art mb-4 flex items-center justify-center text-gray-500 text-xs text-center leading-tight">
+                    No Art
+                </div>
+                
+                <!-- Track Meta -->
+                <div class="w-full bg-black/50 p-2 rounded backdrop-blur-sm">
+                    <h2 id="track-title" class="font-bold text-lg truncate w-full px-2">Insert Audio File</h2>
+                    <p id="track-artist" class="text-sm text-gray-300 truncate w-full px-2">Ready</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- HINGE -->
+        <div class="ds-hinge h-6 -mx-6 flex items-center justify-between px-8 shadow-inner">
+            <div class="w-2 h-full bg-black/20"></div>
+            <div class="w-2 h-full bg-black/20"></div>
+        </div>
+
+        <!-- BOTTOM SCREEN (Touch Screen) -->
+        <div class="w-10/12 aspect-[4/3] mx-auto border-[16px] border-black rounded-lg ds-screen-bottom p-3 flex flex-col justify-between relative">
+            
+            <div class="text-center w-full flex flex-col h-full">
+                
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <!-- Audio File Upload Button -->
+                    <label class="file-upload-label touch-btn rounded-lg py-1 px-1 text-sm font-bold flex items-center justify-center" for="audio-upload">
+                        🎵 Load Audio
+                    </label>
+                    <input type="file" id="audio-upload" accept="audio/*">
+                    
+                    <button id="btn-play" class="touch-btn rounded-lg py-1 px-1 text-sm font-bold flex items-center justify-center" disabled>
+                        ▶ Play/Pause
+                    </button>
+
+                    <!-- Art Replace Button -->
+                    <label class="file-upload-label touch-btn rounded-lg py-1 px-1 text-sm font-bold flex items-center justify-center col-span-2 disabled-look" for="art-upload" id="label-art-upload">
+                        🖼️ Replace Artwork
+                    </label>
+                    <input type="file" id="art-upload" accept="image/png, image/jpeg" disabled>
+                </div>
+
+                <!-- Metadata Editor -->
+                <div class="flex flex-col gap-1 mb-2">
+                    <input type="text" id="edit-title" class="w-full px-2 py-1 rounded border-2 border-gray-400 bg-white/50 text-gray-800 text-sm font-sans focus:bg-white focus:outline-none focus:border-blue-400 transition-colors" placeholder="Track Title" disabled>
+                    <input type="text" id="edit-artist" class="w-full px-2 py-1 rounded border-2 border-gray-400 bg-white/50 text-gray-800 text-sm font-sans focus:bg-white focus:outline-none focus:border-blue-400 transition-colors" placeholder="Artist Name" disabled>
+                </div>
+
+                <button id="btn-convert" class="touch-btn w-full rounded-lg py-2 text-base font-bold bg-green-100 flex items-center justify-center text-green-800 border-green-400 mt-auto mb-2" disabled>
+                    ⟳ Convert to 3DS
+                </button>
+            </div>
+
+            <!-- Log Window -->
+            <div class="w-full bg-gray-300 border-2 border-gray-400 rounded p-1 h-12 overflow-y-auto text-xs leading-tight text-gray-600 font-mono" id="log-window">
+                Waiting for file...
+            </div>
+
+        </div>
     </div>
 
-    <div class="center-section">
-      <div class="select-start">
-        <button class="ss-btn" data-code="0x00000200" data-name="Select">SEL</button>
-        <button class="ss-btn" data-code="0x00000100" data-name="Start">STR</button>
-      </div>
-      <div class="logo">nintendo</div>
-      <div class="triggers">
-        <button class="trigger" data-code="0x00000010" data-name="Right Trigger">R</button>
-        <button class="trigger" data-code="0x00000020" data-name="Left Trigger">L</button>
-      </div>
-    </div>
+    <!-- Application Logic -->
+    <script>
+        const fileInput = document.getElementById('audio-upload');
+        const artInput = document.getElementById('art-upload');
+        const labelArtUpload = document.getElementById('label-art-upload');
+        const trackTitle = document.getElementById('track-title');
+        const trackArtist = document.getElementById('track-artist');
+        const albumArt = document.getElementById('album-art');
+        const btnPlay = document.getElementById('btn-play');
+        const btnConvert = document.getElementById('btn-convert');
+        const topScreen = document.getElementById('top-screen-container');
+        const logWindow = document.getElementById('log-window');
+        const editTitle = document.getElementById('edit-title');
+        const editArtist = document.getElementById('edit-artist');
+        
+        let currentFile = null;
+        let audioElement = new Audio();
+        let currentArtBlob = null;
+        let currentArtExt = 'jpg';
 
-    <div class="abxy-section">
-      <button class="abxy-btn btn-a" data-code="0x00000080" data-name="A">A</button>
-      <button class="abxy-btn btn-b" data-code="0x00000040" data-name="B">B</button>
-      <button class="abxy-btn btn-x" data-code="0x00000100" data-name="X">X</button>
-      <button class="abxy-btn btn-y" data-code="0x00000200" data-name="Y">Y</button>
-    </div>
-  </div>
+        const { FFmpeg } = window.FFmpegWASM;
+        const { fetchFile, toBlobURL } = window.FFmpegUtil;
+        const ffmpeg = new FFmpeg();
 
-  <div class="status-box">
-    <div class="status-label">Pressed Button</div>
-    <div class="status-value" id="status">None</div>
-    <div class="status-hex" id="hex">—</div>
-  </div>
+        function log(message) {
+            logWindow.innerHTML += `> ${message}<br>`;
+            logWindow.scrollTop = logWindow.scrollHeight;
+        }
 
-  <div class="reference">
-    <h3>Button Reference (3DS HTTP POST)</h3>
-    <div class="ref-grid">
-      <div class="ref-item"><span class="ref-name">A</span><span class="ref-code">0x00000080</span></div>
-      <div class="ref-item"><span class="ref-name">B</span><span class="ref-code">0x00000040</span></div>
-      <div class="ref-item"><span class="ref-name">Select</span><span class="ref-code">0x00000200</span></div>
-      <div class="ref-item"><span class="ref-name">Start</span><span class="ref-code">0x00000100</span></div>
-      <div class="ref-item"><span class="ref-name">D-Pad Up</span><span class="ref-code">0x00000001</span></div>
-      <div class="ref-item"><span class="ref-name">D-Pad Down</span><span class="ref-code">0x00000008</span></div>
-      <div class="ref-item"><span class="ref-name">D-Pad Left</span><span class="ref-code">0x00000002</span></div>
-      <div class="ref-item"><span class="ref-name">D-Pad Right</span><span class="ref-code">0x00000004</span></div>
-      <div class="ref-item"><span class="ref-name">Right Trigger</span><span class="ref-code">0x00000010</span></div>
-      <div class="ref-item"><span class="ref-name">Left Trigger</span><span class="ref-code">0x00000020</span></div>
-      <div class="ref-item"><span class="ref-name">X</span><span class="ref-code">0x00000100</span></div>
-      <div class="ref-item"><span class="ref-name">Y</span><span class="ref-code">0x00000200</span></div>
-    </div>
-  </div>
+        function clearLog() {
+            logWindow.innerHTML = '';
+        }
 
-  <script>
-    var buttons = document.querySelectorAll('button[data-code]');
-    var status = document.getElementById('status');
-    var hex = document.getElementById('hex');
+        // Handle live metadata edits updating the top screen
+        editTitle.addEventListener('input', (e) => {
+            trackTitle.innerText = e.target.value || 'Unknown Title';
+        });
 
-    function pressBtn(btn) {
-      document.querySelectorAll('button[data-code]').forEach(function(b) {
-        b.classList.remove('active');
-      });
-      btn.classList.add('active');
-      status.textContent = btn.dataset.name;
-      hex.textContent = btn.dataset.code;
-    }
+        editArtist.addEventListener('input', (e) => {
+            trackArtist.innerText = e.target.value || 'Unknown Artist';
+        });
 
-    buttons.forEach(function(btn) {
-      btn.addEventListener('click', function() { pressBtn(btn); });
-    });
-  </script>
+        // 1. Handle Audio File Upload
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            currentFile = file;
+
+            clearLog();
+            log(`Loaded: ${file.name}`);
+
+            // Setup audio preview
+            const objectUrl = URL.createObjectURL(file);
+            audioElement.src = objectUrl;
+            
+            // Enable UI
+            btnPlay.disabled = false;
+            btnConvert.disabled = false;
+            editTitle.disabled = false;
+            editArtist.disabled = false;
+            artInput.disabled = false;
+            labelArtUpload.classList.remove('disabled-look');
+
+            const fallbackTitle = file.name.replace(/\.[^/.]+$/, ""); // strip extension
+
+            // Extract Metadata using jsmediatags
+            jsmediatags.read(file, {
+                onSuccess: function(tag) {
+                    const tags = tag.tags;
+                    const title = tags.title || fallbackTitle;
+                    const artist = tags.artist || "Unknown Artist";
+
+                    trackTitle.innerText = title;
+                    trackArtist.innerText = artist;
+                    
+                    editTitle.value = title;
+                    editArtist.value = artist;
+
+                    if (tags.picture) {
+                        const { data, format } = tags.picture;
+                        // Convert byte array directly to Blob (faster/safer than base64 strings)
+                        const uint8Array = new Uint8Array(data);
+                        currentArtBlob = new Blob([uint8Array], { type: format });
+                        currentArtExt = format.toLowerCase().includes('png') ? 'png' : 'jpg';
+
+                        const url = URL.createObjectURL(currentArtBlob);
+                        albumArt.style.backgroundImage = `url(${url})`;
+                        albumArt.innerText = "";
+                    } else {
+                        currentArtBlob = null;
+                        albumArt.style.backgroundImage = 'none';
+                        albumArt.innerText = "No Art";
+                    }
+                },
+                onError: function(error) {
+                    currentArtBlob = null;
+                    trackTitle.innerText = fallbackTitle;
+                    trackArtist.innerText = "Unknown Artist";
+                    editTitle.value = fallbackTitle;
+                    editArtist.value = "Unknown Artist";
+                    albumArt.style.backgroundImage = 'none';
+                    albumArt.innerText = "No Art";
+                }
+            });
+        });
+
+        // 2. Handle Custom Artwork Upload
+        artInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            currentArtBlob = file;
+            currentArtExt = file.name.split('.').pop().toLowerCase() === 'png' ? 'png' : 'jpg';
+
+            const objectUrl = URL.createObjectURL(file);
+            albumArt.style.backgroundImage = `url(${objectUrl})`;
+            albumArt.innerText = "";
+            log(`Artwork replaced: ${file.name}`);
+        });
+
+        // 3. Play/Pause Logic
+        btnPlay.addEventListener('click', () => {
+            if (!currentFile) return;
+            if (audioElement.paused) {
+                audioElement.play();
+                topScreen.classList.add('playing');
+                log("Playing preview...");
+            } else {
+                audioElement.pause();
+                topScreen.classList.remove('playing');
+                log("Paused.");
+            }
+        });
+
+        // Event listener to stop animation when audio ends natively
+        audioElement.addEventListener('ended', () => {
+            topScreen.classList.remove('playing');
+        });
+
+        // 4. Convert Logic via FFmpeg
+        btnConvert.addEventListener('click', async () => {
+            if (!currentFile) return;
+
+            try {
+                // Lock UI
+                btnConvert.disabled = true;
+                btnPlay.disabled = true;
+                fileInput.disabled = true;
+                artInput.disabled = true;
+                editTitle.disabled = true;
+                editArtist.disabled = true;
+                labelArtUpload.classList.add('disabled-look');
+                audioElement.pause();
+                topScreen.classList.remove('playing');
+
+                clearLog();
+                log("Initializing Engine...");
+
+                if (!ffmpeg.loaded) {
+                    log("Downloading WebAssembly components...");
+                    
+                    const coreURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
+                    const ffmpegURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd';
+                    
+                    // 1. Fetch the worker and core scripts as raw text 
+                    const coreRes = await fetch(`${coreURL}/ffmpeg-core.js`);
+                    const coreText = await coreRes.text();
+                    
+                    const workerRes = await fetch(`${ffmpegURL}/814.ffmpeg.js`);
+                    const workerText = await workerRes.text();
+                    
+                    // 2. Stitch them together using a Blob array to cleanly expose the UMD functions
+                    // This explicitly binds `createFFmpegCore` to the Web Worker's global `self` object.
+                    const workerBlob = new Blob([
+                        "var module = { exports: {} };\n",
+                        "var exports = module.exports;\n",
+                        coreText,
+                        "\n",
+                        "if (typeof createFFmpegCore === 'function') { self.createFFmpegCore = createFFmpegCore; }\n",
+                        "else if (typeof module !== 'undefined' && typeof module.exports === 'function') { self.createFFmpegCore = module.exports; }\n",
+                        "else if (typeof module !== 'undefined' && typeof module.exports.createFFmpegCore === 'function') { self.createFFmpegCore = module.exports.createFFmpegCore; }\n",
+                        "else if (typeof exports !== 'undefined' && typeof exports.createFFmpegCore === 'function') { self.createFFmpegCore = exports.createFFmpegCore; }\n",
+                        "const originalImportScripts = self.importScripts;\n",
+                        "self.importScripts = function(url) { \n",
+                        "    if (url.includes('ffmpeg-core.js') || url.startsWith('blob:')) return;\n",
+                        "    originalImportScripts(url);\n",
+                        "};\n",
+                        workerText
+                    ], { type: 'text/javascript' });
+                    
+                    const workerBlobURL = URL.createObjectURL(workerBlob);
+                    
+                    // Create a harmless dummy URL for the core load script since we bundled it into the worker
+                    const dummyCoreURL = URL.createObjectURL(new Blob(['/* core embedded */'], { type: 'text/javascript' }));
+
+                    log("Compiling engine...");
+
+                    // 3. Load FFmpeg using our robust blob worker
+                    await ffmpeg.load({
+                        coreURL: dummyCoreURL,
+                        wasmURL: await toBlobURL(`${coreURL}/ffmpeg-core.wasm`, 'application/wasm'),
+                        classWorkerURL: workerBlobURL
+                    });
+                }
+
+                const inputName = 'input_audio';
+                const outputName = 'output_3ds_ready.m4a';
+                let artName = null;
+
+                log("Writing audio to memory...");
+                await ffmpeg.writeFile(inputName, await fetchFile(currentFile));
+
+                // If we have extracted or uploaded artwork, prepare it for embedding
+                const commandArgs = ['-i', inputName];
+
+                if (currentArtBlob) {
+                    log("Writing artwork to memory...");
+                    artName = `cover.${currentArtExt}`;
+                    await ffmpeg.writeFile(artName, await fetchFile(currentArtBlob));
+                    commandArgs.push('-i', artName); // Add image as second input
+                }
+
+                log("Encoding AAC (128k, 44.1kHz)...");
+                log("Please wait, this takes CPU power.");
+                
+                const finalTitle = editTitle.value || 'Unknown Title';
+                const finalArtist = editArtist.value || 'Unknown Artist';
+
+                // Setup the mapping and metadata
+                if (currentArtBlob) {
+                    // Map input 0 (audio) and input 1 (image), copy image stream, attach as picture
+                    commandArgs.push('-map', '0:a', '-map', '1:v', '-c:v', 'copy', '-disposition:v', 'attached_pic');
+                }
+
+                commandArgs.push(
+                    '-c:a', 'aac', 
+                    '-b:a', '128k', 
+                    '-ar', '44100', 
+                    '-metadata', `title=${finalTitle}`,
+                    '-metadata', `artist=${finalArtist}`,
+                    outputName
+                );
+
+                // Run FFmpeg command 
+                await ffmpeg.exec(commandArgs);
+
+                log("Packaging complete!");
+                
+                // Read the result
+                const data = await ffmpeg.readFile(outputName);
+                const blob = new Blob([data.buffer], { type: 'audio/mp4' });
+                const url = URL.createObjectURL(blob);
+                
+                // Trigger download
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = (finalTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'track') + '_3ds.m4a';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                log("<span style='color:green'>Success! Download started.</span>");
+
+                // Cleanup virtual filesystem
+                await ffmpeg.deleteFile(inputName);
+                await ffmpeg.deleteFile(outputName);
+                if (artName) {
+                    await ffmpeg.deleteFile(artName);
+                }
+
+            } catch (err) {
+                console.error(err);
+                log(`<span style='color:red'>Error: ${err.message}</span>`);
+            } finally {
+                // Unlock UI
+                btnConvert.disabled = false;
+                btnPlay.disabled = false;
+                fileInput.disabled = false;
+                artInput.disabled = false;
+                editTitle.disabled = false;
+                editArtist.disabled = false;
+                labelArtUpload.classList.remove('disabled-look');
+                btnConvert.innerText = "⟳ Convert Another";
+            }
+        });
+
+        // Initialize status
+        log("Ready. (100% In-Browser Conversion Engine Loaded).");
+    </script>
 </body>
 </html>

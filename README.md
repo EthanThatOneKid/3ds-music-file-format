@@ -1,30 +1,21 @@
-# 3DS Button Demo
+# 3DS Audio Prep Station
 
-Interactive visualization of Nintendo 3DS button codes for web development.
+A browser-based tool for preparing audio files for 3DS playback: preview audio, inspect/replace artwork, edit metadata, and convert to a 3DS-friendly M4A download entirely in the browser.
 
 **Live:** https://ethanthatonekid.github.io/3ds-demo/
 
-## Buttons
+## Features
 
-| Button | Hex Code |
-|--------|----------|
-| A | `0x00000080` |
-| B | `0x00000040` |
-| X | `0x00000100` |
-| Y | `0x00000200` |
-| Select | `0x00000200` |
-| Start | `0x00000100` |
-| D-Pad Up | `0x00000001` |
-| D-Pad Down | `0x00000008` |
-| D-Pad Left | `0x00000002` |
-| D-Pad Right | `0x00000004` |
-| Right Trigger | `0x00000010` |
-| Left Trigger | `0x00000020` |
+- Load an audio file in the browser
+- Read embedded title, artist, and artwork metadata
+- Replace cover art with a PNG or JPG
+- Edit track title and artist live
+- Convert to a 3DS-ready M4A using FFmpeg.wasm
 
 ## Usage
 
 Open `index.html` in any browser. No server required.
 
-## 3DS Web Dev
+## Notes
 
-For the full 3DS web development guide, see [EthanThatOneKid/3ds-web-dev](https://github.com/EthanThatOneKid/3ds-web-dev).
+This project uses external CDN scripts for Tailwind, jsmediatags, and FFmpeg.wasm, so it can be hosted as a static GitHub Pages site with no build step.
