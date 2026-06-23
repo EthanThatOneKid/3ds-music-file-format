@@ -60,21 +60,6 @@
             z-index: 2;
         }
 
-        .album-art {
-            background-color: #2d3748;
-            background-size: cover;
-            background-position: center;
-            border: 3px solid #fff;
-            box-shadow: 0 0 15px rgba(0,0,0,0.8);
-            animation: spin 5s linear infinite;
-            animation-play-state: paused;
-        }
-
-        .playing .album-art {
-            animation-play-state: running;
-        }
-
-        @keyframes spin { 100% { transform: rotate(360deg); } }
         @keyframes rotateBg { 100% { transform: rotate(360deg); } }
 
         .ds-screen-bottom {
@@ -108,12 +93,6 @@
             margin-bottom: 2px; /* Prevent layout shift */
         }
 
-        .disabled-look {
-            opacity: 0.5;
-            cursor: not-allowed;
-            pointer-events: none;
-        }
-
         .ds-hinge {
             background: #9b2c2c;
             border-top: 2px solid #fc8181;
@@ -138,12 +117,6 @@
         <!-- TOP SCREEN -->
         <div id="top-screen-container" class="w-full aspect-[5/3] bg-black border-[16px] border-black rounded-xl ds-screen-top flex flex-col items-center justify-center text-white p-4">
             <div class="screen-content flex flex-col items-center text-center w-full">
-                <!-- Album Art Circle -->
-                <div id="album-art" class="w-24 h-24 rounded-full album-art mb-4 flex items-center justify-center text-gray-500 text-xs text-center leading-tight">
-                    No Art
-                </div>
-                
-                <!-- Track Meta -->
                 <div class="w-full bg-black/50 p-2 rounded backdrop-blur-sm">
                     <h2 id="track-title" class="font-bold text-lg truncate w-full px-2">Insert Audio File</h2>
                     <p id="track-artist" class="text-sm text-gray-300 truncate w-full px-2">Ready</p>
@@ -173,11 +146,6 @@
                         ▶ Play/Pause
                     </button>
 
-                    <!-- Art Replace Button -->
-                    <label class="file-upload-label touch-btn rounded-lg py-1 px-1 text-sm font-bold flex items-center justify-center col-span-2 disabled-look" for="art-upload" id="label-art-upload">
-                        🖼️ Replace Artwork
-                    </label>
-                    <input type="file" id="art-upload" accept="image/png, image/jpeg" disabled>
                 </div>
 
                 <!-- Metadata Editor -->
@@ -205,11 +173,8 @@
     <!-- Application Logic -->
     <script>
         const fileInput = document.getElementById('audio-upload');
-        const artInput = document.getElementById('art-upload');
-        const labelArtUpload = document.getElementById('label-art-upload');
         const trackTitle = document.getElementById('track-title');
         const trackArtist = document.getElementById('track-artist');
-        const albumArt = document.getElementById('album-art');
         const btnPlay = document.getElementById('btn-play');
         const btnConvert = document.getElementById('btn-convert');
         const topScreen = document.getElementById('top-screen-container');
@@ -220,9 +185,6 @@
         
         let currentFile = null;
         let audioElement = new Audio();
-        let currentArtBlob = null;
-        let currentArtExt = 'jpg';
-
         const { FFmpeg } = window.FFmpegWASM;
         const { fetchFile, toBlobURL } = window.FFmpegUtil;
         const ffmpeg = new FFmpeg();
@@ -264,8 +226,6 @@
             editTitle.disabled = false;
             editArtist.disabled = false;
             editAlbum.disabled = false;
-            artInput.disabled = false;
-            labelArtUpload.classList.remove('disabled-look');
 
             const fallbackTitle = file.name.replace(/\.[^/.]+$/, ""); // strip extension
 
@@ -284,50 +244,19 @@
                     editArtist.value = artist;
                     editAlbum.value = album;
 
-                    if (tags.picture) {
-                        const { data, format } = tags.picture;
-                        // Convert byte array directly to Blob (faster/safer than base64 strings)
-                        const uint8Array = new Uint8Array(data);
-                        currentArtBlob = new Blob([uint8Array], { type: format });
-                        currentArtExt = format.toLowerCase().includes('png') ? 'png' : 'jpg';
-
-                        const url = URL.createObjectURL(currentArtBlob);
-                        albumArt.style.backgroundImage = `url(${url})`;
-                        albumArt.innerText = "";
-                    } else {
-                        currentArtBlob = null;
-                        albumArt.style.backgroundImage = 'none';
-                        albumArt.innerText = "No Art";
-                    }
+                    // Artwork is omitted — 3DS Music app does not display it
                 },
                 onError: function(error) {
-                    currentArtBlob = null;
                     trackTitle.innerText = fallbackTitle;
                     trackArtist.innerText = "Unknown Artist";
                     editTitle.value = fallbackTitle;
                     editArtist.value = "Unknown Artist";
                     editAlbum.value = "Unknown Album";
-                    albumArt.style.backgroundImage = 'none';
-                    albumArt.innerText = "No Art";
                 }
             });
         });
 
-        // 2. Handle Custom Artwork Upload
-        artInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            currentArtBlob = file;
-            currentArtExt = file.name.split('.').pop().toLowerCase() === 'png' ? 'png' : 'jpg';
-
-            const objectUrl = URL.createObjectURL(file);
-            albumArt.style.backgroundImage = `url(${objectUrl})`;
-            albumArt.innerText = "";
-            log(`Artwork replaced: ${file.name}`);
-        });
-
-        // 3. Play/Pause Logic
+        // 2. Play/Pause
         btnPlay.addEventListener('click', () => {
             if (!currentFile) return;
             if (audioElement.paused) {
@@ -346,7 +275,7 @@
             topScreen.classList.remove('playing');
         });
 
-        // 4. Convert Logic via FFmpeg
+        // 3. Convert via FFmpeg
         btnConvert.addEventListener('click', async () => {
             if (!currentFile) return;
 
@@ -355,11 +284,9 @@
                 btnConvert.disabled = true;
                 btnPlay.disabled = true;
                 fileInput.disabled = true;
-                artInput.disabled = true;
                 editTitle.disabled = true;
                 editArtist.disabled = true;
                 editAlbum.disabled = true;
-                labelArtUpload.classList.add('disabled-look');
                 audioElement.pause();
                 topScreen.classList.remove('playing');
 
@@ -415,20 +342,11 @@
 
                 const inputName = 'input_audio';
                 const outputName = 'output_3ds_ready.mp3';
-                let artName = null;
 
                 log("Writing audio to memory...");
                 await ffmpeg.writeFile(inputName, await fetchFile(currentFile));
 
-                // If we have extracted or uploaded artwork, prepare it for embedding
                 const commandArgs = ['-i', inputName];
-
-                if (currentArtBlob) {
-                    log("Writing artwork to memory...");
-                    artName = `cover.${currentArtExt}`;
-                    await ffmpeg.writeFile(artName, await fetchFile(currentArtBlob));
-                    commandArgs.push('-i', artName); // Add image as second input
-                }
 
                 log("Encoding MP3 (128k, 44.1kHz)...");
                 log("Please wait, this takes CPU power.");
@@ -436,12 +354,6 @@
                 const finalTitle = editTitle.value || 'Unknown Title';
                 const finalArtist = editArtist.value || 'Unknown Artist';
                 const finalAlbum = editAlbum.value || 'Unknown Album';
-
-                // Setup the mapping and metadata
-                if (currentArtBlob) {
-                    // Map inputs, force MJPEG, and scale down to 320x320 so 3DS memory doesn't crash on high-res PNGs
-                    commandArgs.push('-map', '0:a', '-map', '1:v', '-c:v', 'mjpeg', '-s', '320x320', '-disposition:v', 'attached_pic');
-                }
 
                 commandArgs.push(
                     '-c:a', 'libmp3lame', 
@@ -477,9 +389,6 @@
                 // Cleanup virtual filesystem
                 await ffmpeg.deleteFile(inputName);
                 await ffmpeg.deleteFile(outputName);
-                if (artName) {
-                    await ffmpeg.deleteFile(artName);
-                }
 
             } catch (err) {
                 console.error(err);
@@ -489,11 +398,9 @@
                 btnConvert.disabled = false;
                 btnPlay.disabled = false;
                 fileInput.disabled = false;
-                artInput.disabled = false;
                 editTitle.disabled = false;
                 editArtist.disabled = false;
                 editAlbum.disabled = false;
-                labelArtUpload.classList.remove('disabled-look');
                 btnConvert.innerText = "⟳ Convert Another";
             }
         });
